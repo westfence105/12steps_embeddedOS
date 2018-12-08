@@ -62,15 +62,18 @@ static int elf_load_program( struct elf_header* header ){
 
         if( program_header->type != 1 ) continue; //is loadable
 
-        puts("Header "); putxval( i, 0 ); puts(":\n");
-        puts(" offset:            0x"); putxval( program_header->offset,        6 ); putc('\n');
-        puts(" virtual address:   0x"); putxval( program_header->virtual_addr,  8 ); putc('\n');
-        puts(" physical address:  0x"); putxval( program_header->physical_addr, 8 ); putc('\n');
-        puts(" file size:         0x"); putxval( program_header->file_size,     5 ); putc('\n');
-        puts(" memory size:       0x"); putxval( program_header->memory_size,   5 ); putc('\n');
-        puts(" flags:             0x"); putxval( program_header->flags,         2 ); putc('\n');
-        puts(" align:             0x"); putxval( program_header->align,         2 ); putc('\n');
-        putc('\n');
+    //    puts("Header "); putxval( i, 0 ); puts(":\n");
+    //    puts(" offset:            0x"); putxval( program_header->offset,        6 ); putc('\n');
+    //    puts(" virtual address:   0x"); putxval( program_header->virtual_addr,  8 ); putc('\n');
+    //    puts(" physical address:  0x"); putxval( program_header->physical_addr, 8 ); putc('\n');
+    //    puts(" file size:         0x"); putxval( program_header->file_size,     5 ); putc('\n');
+    //    puts(" memory size:       0x"); putxval( program_header->memory_size,   5 ); putc('\n');
+    //    puts(" flags:             0x"); putxval( program_header->flags,         2 ); putc('\n');
+    //    puts(" align:             0x"); putxval( program_header->align,         2 ); putc('\n');
+    //    putc('\n');
+
+        memcpy( (uint8*)program_header->physical_addr, (uint8*)header + program_header->offset, program_header->file_size );
+        memset( (uint8*)program_header->physical_addr + program_header->file_size, 0, program_header->memory_size - program_header->file_size );
 
         header_addr += header->program_header_size;
     }
@@ -78,11 +81,11 @@ static int elf_load_program( struct elf_header* header ){
     return 0;
 }
 
-int elf_load( uint8* buf ){
+unsigned long elf_load( uint8* buf ){
     struct elf_header* header = (struct elf_header*)buf;
 
-    if( elf_check( header ) < 0 ) return -1;
-    if( elf_load_program( header ) < 0 ) return -1;
+    if( elf_check( header ) < 0 ) return NULL;
+    if( elf_load_program( header ) < 0 ) return NULL;
 
-    return 0;
+    return header->entry_point;
 }

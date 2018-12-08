@@ -76,7 +76,16 @@ int main(){
             dump( loadbuf, size );
         }
         else if( strcmp( buf, "run" ) == 0 ){
-            elf_load( loadbuf );
+            unsigned long entry_point = elf_load( loadbuf );
+            if( !entry_point ){
+                puts("Error befor running!");
+            }
+            else {
+                puts("Starting from entry point:  0x");
+                putxval( entry_point, 0 );
+                puts("\n\n");
+                ((int (*)())entry_point)();
+            }
         }
         else if( strcmp( buf, "shutdown" ) == 0 ){
             break;
