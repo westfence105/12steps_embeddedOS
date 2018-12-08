@@ -26,7 +26,8 @@ $(BUILD_DIR):
 		mkdir -p $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TARGET): $(OBJS)
-		$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+		$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $(BUILD_DIR)/$(TARGET).elf
+		cp $(BUILD_DIR)/$(TARGET).elf $@
 		$(STRIP) $@
 
 $(BUILD_DIR)/%.o: %
