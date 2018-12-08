@@ -86,28 +86,45 @@ int serial_init(int index){
     sci->BRR = 64; //20MHz -> 9600bps
     sci->SCR.BIT.RE = 1;
     sci->SCR.BIT.TE = 1;
-//    sci->SCR.BYTE = 0x30;
     sci->SSR.BYTE = 0;
 
     return 0;
 }
 
-//int serial_is_send_enable( int index ){
-//    if( index < 0 || SERIAL_SCI_NUM <= index ) return 0;
-//
-//    return ( regs[index].sci->SCR.BIT.TE && regs[index].sci->SSR.BIT.TDRE );
-//}
+int serial_is_send_enable( int index ){
+    if( index < 0 || SERIAL_SCI_NUM <= index ) return 0;
+
+    return ( regs[index].sci->SCR.BIT.TE && regs[index].sci->SSR.BIT.TDRE );
+}
 
 int serial_send_byte( int index, unsigned char c ){
     if( index < 0 || SERIAL_SCI_NUM <= index ) return -1;
 
     volatile struct h8_3069f_sci* sci = regs[index].sci;
 
-//    if( !sci->SCR.BIT.TE ) return -2;
-    while( (sci->SSR.BIT.TDRE) == 0 );
+    while( !serial_is_send_enable(index) );
 
     sci->TDR = (uint8)c;
     sci->SSR.BIT.TDRE &= 0;
 
     return 0;
+}
+
+int serial_is_recv_enable( int index ){
+    if( index < 0 || SERIAL_SCI_NUM <= index ) return 0;
+
+    return ( regs[index].sci->SCR.BIT.RE && regs[index].sci->SSR.BIT.RDRF );
+}
+
+uint8 serial_recv_byte( int index ){
+    if( index < 0 || SERIAL_SCI_NUM <= index ) return -1;
+
+    volatile struct h8_3069f_sci* sci = regs[index].sci;
+
+    while( !serial_is_recv_enable(index) );
+
+    uint8 c = sci->RDR;
+    sci->SSR.BIT.RDRF = 0;
+
+    return c;
 }

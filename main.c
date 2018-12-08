@@ -1,6 +1,7 @@
 #include "defines.h"
 #include "serial.h"
 #include "lib.h"
+#include "xmodem.h"
 
 static int init(){
     extern int erodata, data_start, edata, bss_start, ebss;
@@ -12,31 +13,78 @@ static int init(){
     return 0;
 }
 
-int global_data = 0x10;
-int global_bss;
-static int static_data = 0x20;
-static int static_bss;
+static int dump( uint8* buf, long size ){
+    long i;
 
-static void printval(void)
-{
-  puts("global_data = "); putxval(global_data, 0); puts("\n");
-  puts("global_bss  = "); putxval(global_bss,  0); puts("\n");
-  puts("static_data = "); putxval(static_data, 0); puts("\n");
-  puts("static_bss  = "); putxval(static_bss,  0); puts("\n");
+    if( size < 0 ){
+        puts("no data.\n");
+        return -1;
+    }
+
+    for( i = 0; i < size; ++i ){
+        putxval( buf[i], 2 );
+
+        if( ( i & 0xf ) == 0xf ){
+            putc('\n');
+        }
+        else {
+            if( ( i & 0xf ) == 7 ) putc(' ');
+            putc(' ');
+        }
+    }
+    putc('\n');
+
+    return 0;
+}
+
+static void wait(){
+    volatile long i;
+    for( i = 0; i < 300000; ++i );
 }
 
 int main(){
+    static char buf[16];
+    static long size = -1;
+    static uint8* loadbuf = NULL;
+    extern int buffer_start;
+
+    long command_length;
+
     init();
-    puts("Hello World!\n");
 
-    printval();
-    puts("overwrite variables.\n");
-    global_data = 0x20;
-    global_bss  = 0x30;
-    static_data = 0x40;
-    static_bss  = 0x50;
-    printval();
+    puts("bootloader started.\n");
 
-    while(1);
+    while(1){
+        puts("bootloader> ");
+        command_length = gets( (uint8*)buf );
+
+        if( strcmp( buf, "load" ) == 0 ){
+            puts("Waiting XMODEM Transfer...\n");
+            loadbuf = (uint8*)&buffer_start;
+            size = xmodem_recv(loadbuf);
+            wait();
+            if( size < 0 ){
+                puts("\nXMODEM Receive Error!\n");
+            }
+            else {
+                puts("\nXMODEM Receive Succeeded.\n");
+            }
+        }
+        else if( strcmp( buf, "dump" ) == 0 ){
+            puts("size: "); putxval( size, 0 ); putc('\n');
+            dump( loadbuf, size );
+        }
+        else if( strcmp( buf, "shutdown" ) == 0 ){
+            break;
+        }
+        else if( command_length > sizeof(buf) ){
+            puts("Warning: Too long input.");
+        }
+        else {
+            puts("unknown command.\n");
+        }
+    }
+
+    puts("Bye.\n\n");
     return 0;
 }

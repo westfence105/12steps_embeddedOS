@@ -31,8 +31,8 @@ int memcmp( const void* p1, const void* p2, long len ){
     return 0;
 }
 
-int strlen( const char* str ){
-    int len = 0;
+long strlen( const char* str ){
+    long len = 0;
     while( *(str++) ) len++;
     return len;
 }
@@ -71,9 +71,29 @@ int putc( char c ){
     return serial_send_byte( SERIAL_DEFAULT_DEVICE, *((unsigned char*)&c) );
 }
 
-int puts( char* str ){
-    while( *str ) putc( *(str++) );
-    return 0;
+long puts( char* str ){
+    long i;
+    for( i = 0; *str; i++ ) putc( *(str++) );
+    return i;
+}
+
+uint8 getc(){
+    uint8 c = serial_recv_byte( SERIAL_DEFAULT_DEVICE );
+    serial_send_byte( SERIAL_DEFAULT_DEVICE, c ); //エコーバック
+    return c;
+}
+
+long gets( uint8* buf ){
+    long i = 0;
+    uint8 c;
+    do {
+        c = getc();
+        if( c == '\r' ) continue; //CRを無視
+        if( c == '\n' ) c = 0;    //LFが来たら抜ける
+        buf[i++] = c;
+    } while(c);
+
+    return i - 1;
 }
 
 int putxval( unsigned long value, int column ){

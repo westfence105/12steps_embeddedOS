@@ -15,7 +15,7 @@ CFLAGS  := -Wall -mh -nostdinc -nostdlib -fno-builtin -I. -Os \
 		   -Wno-builtin-declaration-mismatch $(CFLAGS)
 LDFLAGS := -static -T ld.scr -L$(BUILD_DIR) $(LDFLAGS)
 
-OBJS  = vector.c.o startup.s.o main.c.o lib.c.o serial.c.o
+OBJS  = vector.c.o startup.s.o main.c.o lib.c.o serial.c.o xmodem.c.o
 OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS) )
 
 .PHONY: all image write clean
