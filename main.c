@@ -2,6 +2,7 @@
 #include "serial.h"
 #include "lib.h"
 #include "xmodem.h"
+#include "elf.h"
 
 static int init(){
     extern int erodata, data_start, edata, bss_start, ebss;
@@ -73,6 +74,9 @@ int main(){
         else if( strcmp( buf, "dump" ) == 0 ){
             puts("size: "); putxval( size, 0 ); putc('\n');
             dump( loadbuf, size );
+        }
+        else if( strcmp( buf, "run" ) == 0 ){
+            elf_load( loadbuf );
         }
         else if( strcmp( buf, "shutdown" ) == 0 ){
             break;
